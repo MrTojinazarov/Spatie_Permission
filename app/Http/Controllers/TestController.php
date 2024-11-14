@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\MyJob;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -14,7 +15,7 @@ class TestController extends Controller
     public function index()
     {
         $permissions = Permission::all();
-        $models = Role::all();
+        $models = Role::orderBy('id', 'ASC')->take(10)->get();
         return view('spatie-permission', ['models'=> $models,'permissions' => $permissions]);
     }
 
@@ -25,15 +26,11 @@ class TestController extends Controller
             'name' => 'required',
             'permissions' => 'required|array',
         ]);
-
-        $ids = $data['permissions'];
-        unset($data['permissions']);
-
-        $role = Role::create($data);
-        $role->permissions()->attach($ids);
-
-        return redirect()->route('spatie-permission');
+        MyJob::dispatch($data);
+    
+        return redirect()->route('spatie-permission')->with('success', 'Roles created successfully!');
     }
+    
 
     public function update(Request $request , Role $role)
     {
